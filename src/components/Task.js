@@ -4,7 +4,7 @@ const Task = ({task, onDelete,onToggle}) => {
     return (
         <div className={`task ${task.reminder ? 
         "reminder" : ""}`} 
-        onClick={()=>
+        onDoubleClick={()=>
         onToggle(task.id)}>
             <h3>{task.text}
                 <FaTimes style={{color:"red", 
