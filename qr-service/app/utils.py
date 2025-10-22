@@ -96,8 +96,8 @@ def generate_logistic_map(size: int) -> List[int]:
     r = 4.0  # Parameter
 
     for _ in range(size):
-        # Convert to integer [0, 255] using floor
-        logistic_map.append(int(x * 255))
+        # Convert to integer [0, 255] using ROUNDING (not floor!)
+        logistic_map.append(round(x * 255))
         # Update x using logistic map formula
         x = r * x * (1.0 - x)
 
