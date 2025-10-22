@@ -115,8 +115,8 @@ def apply_logistic_encryption(qr_matrix: np.ndarray) -> np.ndarray:
     map_size = (size * size) // 8 + 1
     logistic_map = generate_logistic_map(map_size)
 
-    # Flatten QR matrix to 1D array (row by row)
-    qr_flat = qr_matrix.flatten()
+    # Flatten QR matrix to 1D array in ROW-MAJOR order for logistic map
+    qr_flat = qr_matrix.flatten(order='C')  # Row-major (C order)
 
     # Apply XOR
     encrypted = qr_flat.copy()
@@ -130,16 +130,14 @@ def apply_logistic_encryption(qr_matrix: np.ndarray) -> np.ndarray:
                 break
 
             # Extract bit from logistic map byte
-            # According to spec: QR[0][7] XORs with MSB in LM[0]
-            # This means QR bit index 7 XORs with bit 7 (MSB) of logistic byte
-            # So: bit_pos 0 → logistic bit 0 (LSB), bit_pos 7 → logistic bit 7 (MSB)
+            # bit_pos 0 → logistic bit 0 (LSB), bit_pos 7 → logistic bit 7 (MSB)
             logistic_bit = (logistic_byte >> bit_pos) & 1
 
             # XOR with QR bit
             encrypted[qr_index] ^= logistic_bit
 
-    # Reshape back to matrix
-    return encrypted.reshape(size, size)
+    # Reshape back to matrix in ROW-MAJOR order
+    return encrypted.reshape(size, size, order='C')
 
 
 def reverse_logistic_encryption(qr_matrix: np.ndarray) -> np.ndarray:
@@ -152,12 +150,13 @@ def reverse_logistic_encryption(qr_matrix: np.ndarray) -> np.ndarray:
 def matrix_to_hex_string(qr_matrix: np.ndarray) -> str:
     """
     Convert QR matrix to hex string format
-    Read row by row, pack into 32-bit integers (big endian)
+    Read row by row (row-major order), pack into 32-bit integers (big endian)
     Format: 0x[hex] with lowercase, remove leading zeros
     Special case: 0x0 for zero
     """
     size = qr_matrix.shape[0]
-    bits = qr_matrix.flatten()
+    # Flatten in row-major order (C order)
+    bits = qr_matrix.flatten(order='C')
 
     hex_strings = []
     num_bits = len(bits)
@@ -204,8 +203,8 @@ def hex_string_to_matrix(hex_string: str, size: int) -> np.ndarray:
         binary = format(value, f'0{bits_in_chunk}b')
         all_bits.extend([int(b) for b in binary])
 
-    # Convert to matrix
-    matrix = np.array(all_bits[:size*size]).reshape(size, size)
+    # Convert to matrix in row-major order (C order)
+    matrix = np.array(all_bits[:size*size]).reshape(size, size, order='C')
     return matrix
 
 
