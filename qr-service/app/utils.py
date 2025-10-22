@@ -130,9 +130,10 @@ def apply_logistic_encryption(qr_matrix: np.ndarray) -> np.ndarray:
                 break
 
             # Extract bit from logistic map byte
-            # bit_pos 0 (first bit) corresponds to MSB (bit 7) of logistic byte
-            # bit_pos 7 (last bit) corresponds to LSB (bit 0) of logistic byte
-            logistic_bit = (logistic_byte >> (7 - bit_pos)) & 1
+            # According to spec: QR[0][7] XORs with MSB in LM[0]
+            # This means QR bit index 7 XORs with bit 7 (MSB) of logistic byte
+            # So: bit_pos 0 → logistic bit 0 (LSB), bit_pos 7 → logistic bit 7 (MSB)
+            logistic_bit = (logistic_byte >> bit_pos) & 1
 
             # XOR with QR bit
             encrypted[qr_index] ^= logistic_bit

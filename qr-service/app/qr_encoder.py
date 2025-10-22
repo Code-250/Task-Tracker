@@ -80,22 +80,16 @@ class QREncoder:
 
         Rules:
         1. Start from bottom-right
-        2. Go left, then right-upper
-        3. When hitting boundary/special blocks, reverse direction
-        4. Skip row 6 and column 6 (timing patterns)
-        5. Skip alignment block in version 2
+        2. Process columns in pairs from right to left
+        3. Within each pair, fill (right_col, left_col) alternating for each row
+        4. Direction alternates: up for first pair, down for second pair, etc.
+        5. Skip row 6 and column 6 (timing patterns)
+        6. Skip alignment block in version 2
         """
         size = qr.shape[0]
         payload_idx = 0
         padding = get_padding_sequence()
         padding_idx = 0
-
-        # Current position
-        row = size - 1
-        col = size - 1
-
-        # Direction: True = going up, False = going down
-        going_up = True
 
         def get_next_bit():
             """Get next bit from payload or padding"""
@@ -109,47 +103,45 @@ class QREncoder:
                 padding_idx += 1
                 return bit
 
-        # Zigzag fill
-        while col >= 0:
-            # Process two columns at a time (moving right to left)
-            for c in [col, col - 1]:
-                if c < 0:
-                    break
+        # Start from rightmost column
+        col = size - 1
+        going_up = True
 
-                # Skip timing column (column 6)
-                if c == 6:
-                    continue
+        # Zigzag fill: process column pairs from right to left
+        while col > 0:
+            # Get the two columns in this pair
+            col_right = col
+            col_left = col - 1
 
-                # Fill column from current row
-                r = row
-                while 0 <= r < size:
-                    # Check if position is available
-                    if mask[r, c] == 0:
-                        qr[r, c] = get_next_bit()
+            # Determine row range based on direction
+            if going_up:
+                rows = range(size - 1, -1, -1)  # Bottom to top
+            else:
+                rows = range(0, size)  # Top to bottom
 
-                    # Move to next row based on direction
-                    if going_up:
-                        r -= 1
-                    else:
-                        r += 1
+            # Fill the column pair
+            for row in rows:
+                # Fill right column first, then left column
+                for c in [col_right, col_left]:
+                    # Skip timing column
+                    if c == 6:
+                        continue
 
-                    # If we've filled all rows in this direction, break
-                    if r < 0 or r >= size:
-                        break
+                    # Skip if reserved (position pattern, timing, alignment)
+                    if mask[row, c] == 0:
+                        qr[row, c] = get_next_bit()
 
-            # Move to next column pair
+            # Move to next column pair (2 columns to the left)
             col -= 2
 
-            # Skip timing column adjustment
-            if col == 6:
-                col -= 1
-
-            # Reverse direction
-            going_up = not going_up
-            if going_up:
-                row = size - 1
+            # Special case: if we just processed column 7 and are about to hit column 5
+            # (skipping column 6), don't toggle direction
+            if col == 5:
+                # Column 6 was skipped, don't toggle
+                pass
             else:
-                row = 0
+                # Alternate direction for next column pair
+                going_up = not going_up
 
         return qr
 
