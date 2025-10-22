@@ -1,0 +1,79 @@
+# Default values for qr-code-service
+
+# QR Code Service Configuration
+qrService:
+  name: qr-service
+  replicaCount: 3
+
+  image:
+    repository: 587764054854.dkr.ecr.us-east-1.amazonaws.com/qr-service
+    pullPolicy: Always
+    tag: "latest"
+
+  service:
+    type: LoadBalancer
+    port: 80
+    targetPort: 8080
+
+  resources:
+    requests:
+      memory: "256Mi"
+      cpu: "250m"
+    limits:
+      memory: "512Mi"
+      cpu: "500m"
+
+  env:
+    - name: TEAM_NAME
+      value: "Cumulonimbus"
+    - name: TEAM_AWS_ID
+      value: "587764054854"
+    - name: AUTH_SERVICE_URL
+      value: "http://auth-service:9000"
+    - name: PORT
+      value: "8080"
+
+  autoscaling:
+    enabled: true
+    minReplicas: 3
+    maxReplicas: 10
+    targetCPUUtilizationPercentage: 70
+    targetMemoryUtilizationPercentage: 80
+
+# Authentication Service Configuration
+authService:
+  name: auth-service
+  replicaCount: 2
+
+  image:
+    # Use AMD or ARM based on your cluster architecture
+    repository: public.ecr.aws/cc619/cmucc-teamproject-auth-rest
+    pullPolicy: IfNotPresent
+    tag: "amd64"  # Change to "arm64" if using ARM instances
+
+  service:
+    type: ClusterIP
+    port: 9000
+    targetPort: 9000
+
+  resources:
+    requests:
+      memory: "128Mi"
+      cpu: "100m"
+    limits:
+      memory: "256Mi"
+      cpu: "200m"
+
+# Ingress Configuration (Optional)
+ingress:
+  enabled: false
+  className: "alb"
+  annotations:
+    alb.ingress.kubernetes.io/scheme: internet-facing
+    alb.ingress.kubernetes.io/target-type: ip
+  hosts:
+    - host: qr-service.example.com
+      paths:
+        - path: /
+          pathType: Prefix
+  tls: []

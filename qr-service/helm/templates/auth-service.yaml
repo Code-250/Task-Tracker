@@ -1,0 +1,15 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ .Values.authService.name }}
+  labels:
+    app: {{ .Values.authService.name }}
+spec:
+  type: {{ .Values.authService.service.type }}
+  ports:
+  - port: {{ .Values.authService.service.port }}
+    targetPort: {{ .Values.authService.service.targetPort }}
+    protocol: TCP
+    name: grpc
+  selector:
+    app: {{ .Values.authService.name }}

@@ -1,0 +1,49 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Values.qrService.name }}
+  labels:
+    app: {{ .Values.qrService.name }}
+    version: {{ .Chart.AppVersion }}
+spec:
+  replicas: {{ .Values.qrService.replicaCount }}
+  selector:
+    matchLabels:
+      app: {{ .Values.qrService.name }}
+  template:
+    metadata:
+      labels:
+        app: {{ .Values.qrService.name }}
+        version: {{ .Chart.AppVersion }}
+    spec:
+      containers:
+      - name: {{ .Values.qrService.name }}
+        image: "{{ .Values.qrService.image.repository }}:{{ .Values.qrService.image.tag }}"
+        imagePullPolicy: {{ .Values.qrService.image.pullPolicy }}
+        ports:
+        - name: http
+          containerPort: {{ .Values.qrService.service.targetPort }}
+          protocol: TCP
+        env:
+        {{- range .Values.qrService.env }}
+        - name: {{ .name }}
+          value: {{ .value | quote }}
+        {{- end }}
+        resources:
+          {{- toYaml .Values.qrService.resources | nindent 10 }}
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: http
+          initialDelaySeconds: 30
+          periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 3
+        readinessProbe:
+          httpGet:
+            path: /health
+            port: http
+          initialDelaySeconds: 10
+          periodSeconds: 5
+          timeoutSeconds: 3
+          failureThreshold: 3

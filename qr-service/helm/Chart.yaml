@@ -1,0 +1,12 @@
+apiVersion: v2
+name: qr-code-service
+description: QR Code Service with Authentication
+type: application
+version: 1.0.0
+appVersion: "1.0.0"
+keywords:
+  - qr-code
+  - fastapi
+  - authentication
+maintainers:
+  - name: Cumulonimbus Team
