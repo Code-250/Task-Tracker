@@ -47,21 +47,32 @@ class QREncoder:
         mask = np.zeros((size, size), dtype=int)  # 1 = reserved, 0 = available
 
         # Add position detection patterns (3 corners)
-        positions = [(0, 0), (0, size - 8), (size - 8, 0)]
-        for row, col in positions:
-            qr[row:row + 8, col:col + 8] = self.position_pattern
-            mask[row:row + 8, col:col + 8] = 1
+        # Top-left: full 8x8 pattern
+        qr[0:8, 0:8] = self.position_pattern
+        mask[0:8, 0:8] = 1
+
+        # Top-right: 7x8 pattern (no right border, starts at size-7)
+        # The white border is to the left (column size-8)
+        top_right_pattern = self.position_pattern[:, :7]  # Remove right column
+        qr[0:8, size-7:size] = top_right_pattern
+        mask[0:8, size-7:size] = 1
+
+        # Bottom-left: 8x7 pattern (no bottom border, starts at size-7)
+        # The white border is above (row size-8)
+        bottom_left_pattern = self.position_pattern[:7, :]  # Remove bottom row
+        qr[size-7:size, 0:8] = bottom_left_pattern
+        mask[size-7:size, 0:8] = 1
 
         # Add timing patterns (row 6 and column 6)
         h_timing, v_timing = generate_timing_patterns(version)
 
         # Horizontal timing (row 6), skip position patterns
-        for col in range(8, size - 8):
+        for col in range(8, size - 7):
             qr[6, col] = h_timing[col]
             mask[6, col] = 1
 
         # Vertical timing (column 6), skip position patterns
-        for row in range(8, size - 8):
+        for row in range(8, size - 7):
             qr[row, 6] = v_timing[row]
             mask[row, 6] = 1
 
