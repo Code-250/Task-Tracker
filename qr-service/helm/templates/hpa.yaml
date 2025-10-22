@@ -1,0 +1,28 @@
+{{- if .Values.qrService.autoscaling.enabled }}
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: {{ .Values.qrService.name }}-hpa
+  labels:
+    app: {{ .Values.qrService.name }}
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: {{ .Values.qrService.name }}
+  minReplicas: {{ .Values.qrService.autoscaling.minReplicas }}
+  maxReplicas: {{ .Values.qrService.autoscaling.maxReplicas }}
+  metrics:
+  - type: Resource
+    resource:
+      name: cpu
+      target:
+        type: Utilization
+        averageUtilization: {{ .Values.qrService.autoscaling.targetCPUUtilizationPercentage }}
+  - type: Resource
+    resource:
+      name: memory
+      target:
+        type: Utilization
+        averageUtilization: {{ .Values.qrService.autoscaling.targetMemoryUtilizationPercentage }}
+{{- end }}

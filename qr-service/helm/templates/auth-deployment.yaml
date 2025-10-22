@@ -1,0 +1,26 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Values.authService.name }}
+  labels:
+    app: {{ .Values.authService.name }}
+spec:
+  replicas: {{ .Values.authService.replicaCount }}
+  selector:
+    matchLabels:
+      app: {{ .Values.authService.name }}
+  template:
+    metadata:
+      labels:
+        app: {{ .Values.authService.name }}
+    spec:
+      containers:
+      - name: {{ .Values.authService.name }}
+        image: "{{ .Values.authService.image.repository }}:{{ .Values.authService.image.tag }}"
+        imagePullPolicy: {{ .Values.authService.image.pullPolicy }}
+        ports:
+        - name: grpc
+          containerPort: {{ .Values.authService.service.targetPort }}
+          protocol: TCP
+        resources:
+          {{- toYaml .Values.authService.resources | nindent 10 }}

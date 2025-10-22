@@ -1,0 +1,15 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ .Values.qrService.name }}
+  labels:
+    app: {{ .Values.qrService.name }}
+spec:
+  type: {{ .Values.qrService.service.type }}
+  ports:
+  - port: {{ .Values.qrService.service.port }}
+    targetPort: {{ .Values.qrService.service.targetPort }}
+    protocol: TCP
+    name: http
+  selector:
+    app: {{ .Values.qrService.name }}
